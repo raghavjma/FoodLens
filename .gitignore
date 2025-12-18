@@ -39,3 +39,7 @@
 
 # debug information files
 *.dwo
+
+# Node (MERN)
+node_modules/
+.env
