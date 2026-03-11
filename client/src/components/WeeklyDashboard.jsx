@@ -30,11 +30,20 @@ const WeeklyDashboard = ({ recentMeals = [], onReset }) => {
     fetchRecommendations();
   }, [recentMeals.length]); // Re-fetch when new meals are added
 
-  const totalWeeklyCalories = insights?.totalWeeklyCalories || 0;
+  const totalCalories = insights?.totalCalories || 0;
   const weeklyTarget = insights?.weeklyTarget || 14000;
-  const dailyAverage = insights?.dailyAverage || 0;
+  const dailyCalorieTarget = insights?.dailyCalorieTarget || 2000;
   const dietProfile = insights?.dietProfile || 'Balanced';
   const insightText = insights?.insightText || 'Upload meals to get personalized health insights.';
+  const totalMacros = insights?.totalMacros || { protein: 0, carbs: 0, fat: 0 };
+  const dailyTargets = insights?.dailyTargets || { protein: 50, carbs: 300, fat: 65 };
+  const mealsLogged = insights?.mealsLogged || 0;
+
+  const macroProgressBars = [
+    { label: 'Protein', consumed: totalMacros.protein, target: dailyTargets.protein, color: 'from-rose-400 to-rose-500', bg: 'bg-rose-100', text: 'text-rose-600' },
+    { label: 'Carbs',   consumed: totalMacros.carbs,   target: dailyTargets.carbs,   color: 'from-amber-400 to-amber-500', bg: 'bg-amber-100', text: 'text-amber-600' },
+    { label: 'Fat',     consumed: totalMacros.fat,     target: dailyTargets.fat,     color: 'from-yellow-400 to-yellow-500', bg: 'bg-yellow-100', text: 'text-yellow-600' },
+  ];
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 animate-in slide-in-from-bottom-8 duration-700">
@@ -71,34 +80,37 @@ const WeeklyDashboard = ({ recentMeals = [], onReset }) => {
               {insightText}
             </p>
 
-            {/* Macro averages */}
-            {insights?.avgMacros && (
-              <div className="flex gap-4 mb-6">
-                <div className="text-center bg-rose-50 rounded-xl px-4 py-2">
-                  <p className="text-lg font-bold text-rose-600">{insights.avgMacros.protein}g</p>
-                  <p className="text-xs font-semibold text-rose-400">Avg Protein</p>
-                </div>
-                <div className="text-center bg-amber-50 rounded-xl px-4 py-2">
-                  <p className="text-lg font-bold text-amber-600">{insights.avgMacros.carbs}g</p>
-                  <p className="text-xs font-semibold text-amber-400">Avg Carbs</p>
-                </div>
-                <div className="text-center bg-yellow-50 rounded-xl px-4 py-2">
-                  <p className="text-lg font-bold text-yellow-600">{insights.avgMacros.fat}g</p>
-                  <p className="text-xs font-semibold text-yellow-400">Avg Fat</p>
-                </div>
-              </div>
-            )}
+            {/* Macro progress bars: Total consumed vs Daily target */}
+            <div className="space-y-4 mb-6">
+              {macroProgressBars.map((m, i) => {
+                const pct = m.target > 0 ? Math.min(100, Math.round((m.consumed / m.target) * 100)) : 0;
+                return (
+                  <div key={i}>
+                    <div className="flex justify-between text-sm font-bold mb-1">
+                      <span className={m.text}>{m.label}</span>
+                      <span className="text-slate-500">{m.consumed}g / {m.target}g ({pct}%)</span>
+                    </div>
+                    <div className={`w-full h-2.5 ${m.bg} rounded-full overflow-hidden`}>
+                      <div
+                        className={`h-full bg-gradient-to-r ${m.color} rounded-full transition-all duration-500`}
+                        style={{ width: `${pct}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
             
             <div className="space-y-4">
               <div>
                 <div className="flex justify-between text-sm font-bold mb-1">
-                  <span className="text-slate-700">Weekly Calorie Goal</span>
-                  <span className="text-slate-500">{totalWeeklyCalories.toLocaleString()} / {weeklyTarget.toLocaleString()} kcal</span>
+                  <span className="text-slate-700">Daily Calorie Goal</span>
+                  <span className="text-slate-500">{totalCalories.toLocaleString()} / {dailyCalorieTarget.toLocaleString()} kcal</span>
                 </div>
                 <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-gradient-to-r from-primary-400 to-primary-600 rounded-full transition-all duration-500" 
-                    style={{ width: `${Math.min(100, (totalWeeklyCalories / weeklyTarget) * 100)}%` }}
+                    style={{ width: `${Math.min(100, (totalCalories / dailyCalorieTarget) * 100)}%` }}
                   ></div>
                 </div>
               </div>
@@ -111,8 +123,10 @@ const WeeklyDashboard = ({ recentMeals = [], onReset }) => {
             </div>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Diet Profile</p>
             <p className="text-lg font-extrabold text-indigo-600 mb-3">{dietProfile}</p>
-            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest text-center mt-2">Daily Average</p>
-            <p className="text-4xl font-black text-slate-800 tracking-tight">{dailyAverage} <span className="text-xl text-slate-500 font-medium">kcal</span></p>
+            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest text-center">Meals Logged</p>
+            <p className="text-4xl font-black text-slate-800 tracking-tight">{mealsLogged}</p>
+            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest text-center mt-4">Today's Total</p>
+            <p className="text-3xl font-black text-slate-800 tracking-tight">{totalCalories} <span className="text-lg text-slate-500 font-medium">kcal</span></p>
           </div>
         </div>
 

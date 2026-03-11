@@ -74,46 +74,48 @@ function getDietProfile(avgProtein, avgCarbs, avgFat) {
  * @returns {Object} - recommendations with health insights
  */
 export function generateRecommendations(recentMeals = [], dailyCalorieTarget = 2000, topN = 4) {
-  // ── Step 1: Compute user's average macro profile ────────────────
-  let avgProtein = 20, avgCarbs = 50, avgFat = 15; // defaults for no history
+  // ── Step 1: Compute TOTAL consumed macros ───────────────────────
+  let totalP = 0, totalC = 0, totalF = 0;
   const eatenFoods = new Set();
 
-  if (recentMeals.length > 0) {
-    let totalP = 0, totalC = 0, totalF = 0;
-    for (const meal of recentMeals) {
-      const m = meal.nutrition?.macronutrients;
-      if (m) {
-        totalP += m.protein || 0;
-        totalC += m.carbs || 0;
-        totalF += m.fat || 0;
-      }
-      if (meal.nutrition?.foodItem) {
-        eatenFoods.add(meal.nutrition.foodItem.toLowerCase());
-      }
+  for (const meal of recentMeals) {
+    const m = meal.nutrition?.macronutrients;
+    if (m) {
+      totalP += m.protein || 0;
+      totalC += m.carbs || 0;
+      totalF += m.fat || 0;
     }
-    avgProtein = totalP / recentMeals.length;
-    avgCarbs = totalC / recentMeals.length;
-    avgFat = totalF / recentMeals.length;
+    if (meal.nutrition?.foodItem) {
+      eatenFoods.add(meal.nutrition.foodItem.toLowerCase());
+    }
   }
 
-  // ── Step 2: Compute a "target" macro vector ─────────────────────
-  // Ideal macro split for balanced diet: 30% protein, 40% carbs, 30% fat
-  const idealProtein = 30;
-  const idealCarbs = 50;
-  const idealFat = 20;
+  // Daily recommended targets (based on a 2000 kcal balanced diet)
+  //   Protein: 10-35% of calories → ~50g   (200 kcal / 4 cal/g)
+  //   Carbs:   45-65% of calories → ~300g   (1200 kcal / 4 cal/g)
+  //   Fat:     20-35% of calories → ~65g    (585 kcal / 9 cal/g)
+  const scaleFactor = dailyCalorieTarget / 2000;
+  const dailyTargets = {
+    protein: Math.round(50 * scaleFactor),
+    carbs: Math.round(300 * scaleFactor),
+    fat: Math.round(65 * scaleFactor),
+  };
 
-  // Blend: 60% ideal + 40% user preference (so we gently steer them)
-  const targetVec = [
-    idealProtein * 0.6 + avgProtein * 0.4,
-    idealCarbs * 0.6 + avgCarbs * 0.4,
-    idealFat * 0.6 + avgFat * 0.4,
-  ];
+  // Use totals for similarity matching (what the user ate today)
+  const userVec = recentMeals.length > 0
+    ? [totalP, totalC, totalF]
+    : [dailyTargets.protein, dailyTargets.carbs, dailyTargets.fat];
+
+  // ── Step 2: Compute what they STILL NEED to hit daily targets ───
+  const remainingP = Math.max(0, dailyTargets.protein - totalP);
+  const remainingC = Math.max(0, dailyTargets.carbs - totalC);
+  const remainingF = Math.max(0, dailyTargets.fat - totalF);
+  const targetVec = [remainingP || 1, remainingC || 1, remainingF || 1];
 
   // ── Step 3: Score every food using cosine similarity ─────────────
   const scored = [];
 
   for (const [foodName, info] of Object.entries(calorieDatabase)) {
-    // Skip foods the user already ate recently
     if (eatenFoods.has(foodName)) continue;
 
     const serving = info.typicalServingG || 200;
@@ -141,34 +143,40 @@ export function generateRecommendations(recentMeals = [], dailyCalorieTarget = 2
     });
   }
 
-  // Sort by similarity (descending) and return topN
   scored.sort((a, b) => b.similarity - a.similarity);
   const recommendations = scored.slice(0, topN);
 
   // ── Step 4: Generate health insights ────────────────────────────
-  const dietProfile = getDietProfile(avgProtein, avgCarbs, avgFat);
+  const dietProfile = getDietProfile(totalP, totalC, totalF);
 
-  const totalWeeklyCalories = recentMeals.reduce(
+  const totalCalories = recentMeals.reduce(
     (acc, meal) => acc + (meal.nutrition?.calories || 0), 0
   );
   const weeklyTarget = dailyCalorieTarget * 7;
-  const dailyAverage = recentMeals.length > 0
-    ? Math.round(totalWeeklyCalories / Math.min(recentMeals.length, 7))
-    : dailyCalorieTarget;
 
-  // Generate insight text
-  let insightText = `Based on your recent meals, your diet aligns closely with a ${dietProfile} profile. `;
-  if (avgProtein > 25) {
-    insightText += "You're hitting great protein levels! ";
-  } else if (avgProtein < 12) {
-    insightText += "Consider adding more protein-rich foods to your diet. ";
-  }
-  if (avgFat > 25) {
-    insightText += "Your fat intake is on the higher side — try swapping in some grilled or steamed options.";
-  } else if (avgCarbs > 60) {
-    insightText += "Carbs are running high — try balancing with more protein and healthy fats.";
+  // Generate insight text based on totals vs targets
+  let insightText = '';
+  if (recentMeals.length === 0) {
+    insightText = 'Upload meals to get personalized health insights based on your actual intake.';
   } else {
-    insightText += "Keep up the balanced eating!";
+    insightText = `Based on ${recentMeals.length} meal(s) logged, your diet aligns with a ${dietProfile} profile. `;
+    const proteinPct = Math.round((totalP / dailyTargets.protein) * 100);
+    const carbsPct = Math.round((totalC / dailyTargets.carbs) * 100);
+    const fatPct = Math.round((totalF / dailyTargets.fat) * 100);
+
+    if (proteinPct > 100) {
+      insightText += "You've exceeded your protein target — great for muscle recovery! ";
+    } else if (proteinPct < 40) {
+      insightText += `You've only hit ${proteinPct}% of your protein goal — add protein-rich foods. `;
+    }
+
+    if (fatPct > 120) {
+      insightText += "Fat intake is above target — consider lighter options for your next meal.";
+    } else if (carbsPct > 120) {
+      insightText += "Carb intake is high — balance your next meal with more protein and healthy fats.";
+    } else {
+      insightText += "Keep up the balanced eating!";
+    }
   }
 
   return {
@@ -176,14 +184,18 @@ export function generateRecommendations(recentMeals = [], dailyCalorieTarget = 2
     insights: {
       dietProfile,
       insightText,
-      totalWeeklyCalories,
+      totalCalories,
       weeklyTarget,
-      dailyAverage,
-      avgMacros: {
-        protein: Math.round(avgProtein),
-        carbs: Math.round(avgCarbs),
-        fat: Math.round(avgFat),
-      }
+      dailyCalorieTarget,
+      mealsLogged: recentMeals.length,
+      // TOTAL consumed macros (not averages)
+      totalMacros: {
+        protein: parseFloat(totalP.toFixed(1)),
+        carbs: parseFloat(totalC.toFixed(1)),
+        fat: parseFloat(totalF.toFixed(1)),
+      },
+      // Daily targets for comparison
+      dailyTargets,
     }
   };
 }
