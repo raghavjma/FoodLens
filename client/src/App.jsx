@@ -1,17 +1,14 @@
-import './App.css';
+import React from 'react';
+import Navbar from './components/Navbar';
 import Home from './pages/Home';
 
 function App() {
   return (
-    <div className="app">
-      <header>
-        <h1>FoodLens</h1>
-      </header>
-      <main>
-        <Home />
-      </main>
+    <div>
+      <Navbar />
+      <Home />
     </div>
-  )
+  );
 }
 
 export default App;
