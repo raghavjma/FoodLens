@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Target, TrendingUp, Zap, LayoutGrid, Loader2 } from 'lucide-react';
+import { Target, TrendingUp, Zap, LayoutGrid, Loader2, RotateCcw } from 'lucide-react';
 
-const WeeklyDashboard = ({ recentMeals = [] }) => {
+const WeeklyDashboard = ({ recentMeals = [], onReset }) => {
   const [recommendations, setRecommendations] = useState([]);
   const [insights, setInsights] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -39,9 +39,24 @@ const WeeklyDashboard = ({ recentMeals = [] }) => {
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 animate-in slide-in-from-bottom-8 duration-700">
       
-      <div className="flex items-center gap-3 mb-8">
-        <LayoutGrid className="w-8 h-8 text-primary-500" />
-        <h2 className="text-3xl font-extrabold text-slate-800">Your Weekly Diet Plan</h2>
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-3">
+          <LayoutGrid className="w-8 h-8 text-primary-500" />
+          <h2 className="text-3xl font-extrabold text-slate-800">Your Weekly Diet Plan</h2>
+        </div>
+        {recentMeals.length > 0 && onReset && (
+          <button
+            onClick={() => {
+              if (window.confirm('Reset your weekly calorie goal and clear all meal history? This cannot be undone.')) {
+                onReset();
+              }
+            }}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-xl transition-all duration-200 hover:shadow-sm"
+          >
+            <RotateCcw className="w-4 h-4" />
+            Reset Week
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 mb-12">

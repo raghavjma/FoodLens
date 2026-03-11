@@ -11,6 +11,12 @@ function App() {
   const [error, setError] = useState(null);
   const [recentMeals, setRecentMeals] = useState([]);
 
+  const handleResetWeek = () => {
+    setRecentMeals([]);
+    setResultData(null);
+    setError(null);
+  };
+
   const handleAnalyze = async (file) => {
     setIsAnalyzing(true);
     setError(null);
@@ -100,7 +106,7 @@ function App() {
 
         {/* Dashboard Section */}
         <div className="w-full border-t border-slate-200/60 pt-8">
-          <WeeklyDashboard recentMeals={recentMeals} />
+          <WeeklyDashboard recentMeals={recentMeals} onReset={handleResetWeek} />
         </div>
 
       </main>
