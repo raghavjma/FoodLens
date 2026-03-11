@@ -1,5 +1,4 @@
 import fs from 'fs';
-import path from 'path';
 import { classifyFood } from '../services/huggingFaceService.js';
 import { estimateNutrition } from '../services/nutritionService.js';
 
@@ -10,31 +9,41 @@ export const uploadFoodPhoto = async (req, res) => {
     }
 
     const imagePath = req.file.path;
-    
-    // 1. Identify Food via Hugging Face model
-    console.log(`Processing image: ${imagePath}`);
+
+    // 1. Classify food via HuggingFace models (with retry + fallback)
+    console.log(`\n🍽️  Processing image: ${imagePath}`);
     const predictions = await classifyFood(imagePath);
-    const topPrediction = predictions[0]; // { label: '...', score: ... }
+    const topPrediction = predictions[0];
 
-    // 2. Estimate Calories via heuristics (mocked portion size of 200g for now)
-    const nutrition = estimateNutrition(topPrediction.label, 200);
+    // 2. Estimate calories and macros (250g default portion)
+    const nutrition = estimateNutrition(topPrediction.label, 250);
 
-    // Clean up uploaded file synchronously for simplicity in this demo
-    fs.unlinkSync(imagePath);
+    // 3. Include top-3 alternative predictions for transparency
+    const alternatives = predictions.slice(1, 4).map(p => ({
+      label: p.label.replace(/_/g, ' '),
+      confidence: Math.round(p.score * 100)
+    }));
+
+    // Clean up uploaded file
+    try { fs.unlinkSync(imagePath); } catch (_) { /* ignore cleanup errors */ }
 
     res.status(200).json({
       success: true,
       data: {
         recognition: {
           label: topPrediction.label.replace(/_/g, ' '),
-          confidence: Math.round(topPrediction.score * 100)
+          confidence: Math.round(topPrediction.score * 100),
+          alternatives
         },
         nutrition
       }
     });
 
   } catch (error) {
-    console.error('Error processing food image:', error);
-    res.status(500).json({ success: false, message: 'Server error processing image' });
+    console.error('❌ Error processing food image:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to classify food image. The ML model may still be loading — please try again in 15 seconds.' 
+    });
   }
 };

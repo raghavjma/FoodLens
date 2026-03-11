@@ -57,6 +57,20 @@ const NutritionDashboard = ({ data }) => {
           ))}
         </div>
 
+        {/* Alternative Predictions */}
+        {recognition.alternatives && recognition.alternatives.length > 0 && (
+          <div className="mt-6 pt-4 border-t border-slate-100">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Also detected</p>
+            <div className="flex flex-wrap gap-2">
+              {recognition.alternatives.map((alt, i) => (
+                <span key={i} className="text-xs bg-slate-100 text-slate-600 px-3 py-1 rounded-full font-medium capitalize">
+                  {alt.label} ({alt.confidence}%)
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );
