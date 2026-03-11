@@ -1,7 +1,87 @@
-// Comprehensive calorie & macro database covering Food-101 labels and common global cuisines.
-// Values are approximate per 100g. Sources: USDA, IFCT (Indian Food Composition Tables).
+// ──────────────────────────────────────────────────────────────────────────────
+// ImageNet label → friendly food name mapping.
+// The ViT-base-patch16-224 model uses ImageNet-1K labels. Many are food items
+// but with odd names like "carbonara" or "consomme". This map normalizes them.
+// ──────────────────────────────────────────────────────────────────────────────
+const imagenetToFood = {
+  "pizza": "pizza",
+  "pizza, pizza pie": "pizza",
+  "cheeseburger": "burger",
+  "hamburger": "burger",
+  "hotdog": "hot dog",
+  "hot dog": "hot dog",
+  "red hot": "hot dog",
+  "french loaf": "bread",
+  "meat loaf": "meatloaf",
+  "meatloaf": "meatloaf",
+  "bagel": "bagel",
+  "beigel": "bagel",
+  "pretzel": "pretzel",
+  "carbonara": "spaghetti carbonara",
+  "chocolate sauce": "chocolate sauce",
+  "chocolate syrup": "chocolate sauce",
+  "dough": "dough",
+  "burrito": "burrito",
+  "guacamole": "guacamole",
+  "consomme": "soup",
+  "trifle": "trifle",
+  "pot pie": "pot pie",
+  "espresso": "espresso",
+  "ice cream": "ice cream",
+  "icecream": "ice cream",
+  "ice lolly": "popsicle",
+  "lollipop": "popsicle",
+  "popsicle": "popsicle",
+  "plate": "mixed plate",
+  "tray": "mixed plate",
+  "dining table": "mixed plate",
+  "menu": "mixed plate",
+  "broccoli": "broccoli",
+  "cauliflower": "cauliflower",
+  "cucumber": "cucumber",
+  "cuke": "cucumber",
+  "zucchini": "zucchini",
+  "courgette": "zucchini",
+  "artichoke": "artichoke",
+  "bell pepper": "bell pepper",
+  "mushroom": "mushroom",
+  "head cabbage": "cabbage",
+  "mashed potato": "mashed potato",
+  "spaghetti squash": "spaghetti squash",
+  "acorn squash": "squash",
+  "butternut squash": "squash",
+  "granny smith": "apple",
+  "strawberry": "strawberry",
+  "orange": "orange",
+  "lemon": "lemon",
+  "fig": "fig",
+  "pineapple": "pineapple",
+  "ananas": "pineapple",
+  "banana": "banana",
+  "jackfruit": "jackfruit",
+  "custard apple": "custard apple",
+  "pomegranate": "pomegranate",
+  "cardoon": "artichoke",
+  "corn": "corn",
+  "ear": "corn",
+};
 
+// ──────────────────────────────────────────────────────────────────────────────
+// Comprehensive calorie & macro database (per 100 g).
+// Sources: USDA, IFCT (Indian Food Composition Tables).
+// ──────────────────────────────────────────────────────────────────────────────
 const calorieDatabase = {
+  // ── ImageNet specific labels ────────────────────────────────────
+  "mixed plate":        { caloriesPer100g: 175, protein: 7,   carbs: 22,  fat: 6   },
+  "espresso":           { caloriesPer100g: 2,   protein: 0.1, carbs: 0,   fat: 0   },
+  "dough":              { caloriesPer100g: 290, protein: 8,   carbs: 48,  fat: 7   },
+  "trifle":             { caloriesPer100g: 166, protein: 3,   carbs: 22,  fat: 7   },
+  "chocolate sauce":    { caloriesPer100g: 330, protein: 3,   carbs: 54,  fat: 12  },
+  "popsicle":           { caloriesPer100g: 60,  protein: 0,   carbs: 15,  fat: 0   },
+  "bagel":              { caloriesPer100g: 257, protein: 10,  carbs: 50,  fat: 2   },
+  "pretzel":            { caloriesPer100g: 380, protein: 9,   carbs: 79,  fat: 3   },
+  "meatloaf":           { caloriesPer100g: 170, protein: 12,  carbs: 7,   fat: 11  },
+
   // ── Indian Cuisine ──────────────────────────────────────────────
   "thali":              { caloriesPer100g: 180, protein: 7,   carbs: 25,  fat: 6   },
   "dal":                { caloriesPer100g: 100, protein: 7,   carbs: 12,  fat: 2   },
@@ -36,99 +116,94 @@ const calorieDatabase = {
   "pickle":             { caloriesPer100g: 100, protein: 1,   carbs: 8,   fat: 7   },
   "halwa":              { caloriesPer100g: 290, protein: 3,   carbs: 40,  fat: 14  },
 
-  // ── Food-101 Labels (Western / Global) ──────────────────────────
+  // ── Food-101 / Global Cuisine ──────────────────────────────────
   "pizza":              { caloriesPer100g: 266, protein: 11,  carbs: 33,  fat: 10  },
-  "hamburger":          { caloriesPer100g: 295, protein: 14,  carbs: 24,  fat: 14  },
   "burger":             { caloriesPer100g: 295, protein: 14,  carbs: 24,  fat: 14  },
   "hot dog":            { caloriesPer100g: 290, protein: 10,  carbs: 24,  fat: 18  },
   "french fries":       { caloriesPer100g: 312, protein: 3.4, carbs: 41,  fat: 15  },
   "steak":              { caloriesPer100g: 271, protein: 25,  carbs: 0,   fat: 19  },
-  "filet mignon":       { caloriesPer100g: 267, protein: 26,  carbs: 0,   fat: 18  },
   "grilled salmon":     { caloriesPer100g: 208, protein: 20,  carbs: 0,   fat: 13  },
   "fish and chips":     { caloriesPer100g: 240, protein: 12,  carbs: 22,  fat: 13  },
-  "caesar salad":       { caloriesPer100g: 120, protein: 6,   carbs: 6,   fat: 8   },
   "salad":              { caloriesPer100g: 20,  protein: 1,   carbs: 4,   fat: 0.2 },
-  "greek salad":        { caloriesPer100g: 80,  protein: 3,   carbs: 5,   fat: 5   },
   "sushi":              { caloriesPer100g: 143, protein: 4.5, carbs: 32,  fat: 0.5 },
-  "sashimi":            { caloriesPer100g: 127, protein: 25,  carbs: 0,   fat: 2.5 },
   "ramen":              { caloriesPer100g: 100, protein: 5,   carbs: 13,  fat: 3.5 },
   "fried rice":         { caloriesPer100g: 163, protein: 4,   carbs: 24,  fat: 6   },
   "pad thai":           { caloriesPer100g: 145, protein: 6,   carbs: 19,  fat: 5   },
-  "spring rolls":       { caloriesPer100g: 220, protein: 5,   carbs: 25,  fat: 11  },
   "tacos":              { caloriesPer100g: 210, protein: 9,   carbs: 20,  fat: 11  },
   "burrito":            { caloriesPer100g: 200, protein: 8,   carbs: 24,  fat: 8   },
-  "nachos":             { caloriesPer100g: 306, protein: 8,   carbs: 32,  fat: 16  },
+  "guacamole":          { caloriesPer100g: 160, protein: 2,   carbs: 9,   fat: 15  },
   "pancakes":           { caloriesPer100g: 227, protein: 6,   carbs: 28,  fat: 10  },
-  "waffles":            { caloriesPer100g: 291, protein: 8,   carbs: 33,  fat: 15  },
   "omelette":           { caloriesPer100g: 154, protein: 11,  carbs: 1,   fat: 12  },
-  "eggs benedict":      { caloriesPer100g: 200, protein: 10,  carbs: 12,  fat: 12  },
-  "fried egg":          { caloriesPer100g: 196, protein: 14,  carbs: 1,   fat: 15  },
   "pasta":              { caloriesPer100g: 131, protein: 5,   carbs: 25,  fat: 1.1 },
   "spaghetti carbonara":{ caloriesPer100g: 190, protein: 8,   carbs: 22,  fat: 8   },
   "lasagna":            { caloriesPer100g: 163, protein: 9,   carbs: 16,  fat: 7   },
-  "macaroni and cheese": { caloriesPer100g: 164, protein: 7,  carbs: 17,  fat: 7   },
-  "soup":               { caloriesPer100g: 45,  protein: 2,   carbs: 6,   fat: 1   },
-  "clam chowder":       { caloriesPer100g: 87,  protein: 3,   carbs: 8,   fat: 5   },
   "bread":              { caloriesPer100g: 265, protein: 9,   carbs: 49,  fat: 3   },
-  "garlic bread":       { caloriesPer100g: 350, protein: 8,   carbs: 40,  fat: 18  },
-  "bruschetta":         { caloriesPer100g: 160, protein: 4,   carbs: 18,  fat: 8   },
   "apple pie":          { caloriesPer100g: 237, protein: 2,   carbs: 34,  fat: 11  },
   "cheesecake":         { caloriesPer100g: 321, protein: 6,   carbs: 26,  fat: 22  },
   "chocolate cake":     { caloriesPer100g: 370, protein: 5,   carbs: 50,  fat: 17  },
-  "tiramisu":           { caloriesPer100g: 283, protein: 5,   carbs: 30,  fat: 16  },
   "ice cream":          { caloriesPer100g: 207, protein: 3.5, carbs: 24,  fat: 11  },
   "donuts":             { caloriesPer100g: 421, protein: 5,   carbs: 49,  fat: 23  },
-  "churros":            { caloriesPer100g: 361, protein: 4,   carbs: 37,  fat: 22  },
-  "cup cakes":          { caloriesPer100g: 305, protein: 3,   carbs: 45,  fat: 12  },
-  "macarons":           { caloriesPer100g: 400, protein: 6,   carbs: 60,  fat: 15  },
-  "chocolate mousse":   { caloriesPer100g: 210, protein: 4,   carbs: 20,  fat: 13  },
-  "creme brulee":       { caloriesPer100g: 260, protein: 4,   carbs: 25,  fat: 16  },
-  "frozen yogurt":      { caloriesPer100g: 127, protein: 3,   carbs: 22,  fat: 3   },
-  "panna cotta":        { caloriesPer100g: 220, protein: 3,   carbs: 22,  fat: 14  },
-  "grilled cheese sandwich": { caloriesPer100g: 290, protein: 12, carbs: 26, fat: 16 },
-  "club sandwich":      { caloriesPer100g: 220, protein: 13,  carbs: 18,  fat: 11  },
-  "pulled pork sandwich": { caloriesPer100g: 210, protein: 14, carbs: 22, fat: 7   },
-  "lobster roll sandwich": { caloriesPer100g: 220, protein: 14, carbs: 20, fat: 9  },
-
-  // ── Chinese / East Asian ────────────────────────────────────────
+  "soup":               { caloriesPer100g: 45,  protein: 2,   carbs: 6,   fat: 1   },
+  "pot pie":            { caloriesPer100g: 230, protein: 7,   carbs: 22,  fat: 13  },
   "dumplings":          { caloriesPer100g: 180, protein: 7,   carbs: 22,  fat: 7   },
-  "gyoza":              { caloriesPer100g: 190, protein: 7,   carbs: 20,  fat: 8   },
-  "dim sum":            { caloriesPer100g: 170, protein: 7,   carbs: 18,  fat: 7   },
-  "kung pao chicken":   { caloriesPer100g: 170, protein: 14,  carbs: 10,  fat: 9   },
-  "sweet and sour chicken": { caloriesPer100g: 180, protein: 12, carbs: 20, fat: 6 },
-  "chow mein":          { caloriesPer100g: 121, protein: 5,   carbs: 16,  fat: 4   },
-  "peking duck":        { caloriesPer100g: 225, protein: 15,  carbs: 5,   fat: 17  },
-
-  // ── Mediterranean ───────────────────────────────────────────────
   "hummus":             { caloriesPer100g: 166, protein: 8,   carbs: 14,  fat: 10  },
   "falafel":            { caloriesPer100g: 333, protein: 13,  carbs: 32,  fat: 18  },
-  "shawarma":           { caloriesPer100g: 180, protein: 14,  carbs: 12,  fat: 8   },
-  "pho":                { caloriesPer100g: 45,  protein: 4,   carbs: 4,   fat: 1   },
-  "baklava":            { caloriesPer100g: 430, protein: 6,   carbs: 45,  fat: 26  },
 
-  // ── Breakfast ───────────────────────────────────────────────────
-  "cereal":             { caloriesPer100g: 379, protein: 7,   carbs: 80,  fat: 3   },
-  "granola":            { caloriesPer100g: 471, protein: 10,  carbs: 64,  fat: 20  },
-  "yogurt":             { caloriesPer100g: 59,  protein: 10,  carbs: 4,   fat: 1   },
-  "smoothie":           { caloriesPer100g: 55,  protein: 1,   carbs: 12,  fat: 0.3 },
-
-  // ── Fruits & Simple ─────────────────────────────────────────────
-  "fruit":              { caloriesPer100g: 50,  protein: 0.5, carbs: 12,  fat: 0.2 },
+  // ── Vegetables & Fruits ─────────────────────────────────────────
+  "broccoli":           { caloriesPer100g: 34,  protein: 2.8, carbs: 7,   fat: 0.4 },
+  "cauliflower":        { caloriesPer100g: 25,  protein: 1.9, carbs: 5,   fat: 0.3 },
+  "cabbage":            { caloriesPer100g: 25,  protein: 1.3, carbs: 6,   fat: 0.1 },
+  "cucumber":           { caloriesPer100g: 15,  protein: 0.7, carbs: 4,   fat: 0.1 },
+  "zucchini":           { caloriesPer100g: 17,  protein: 1.2, carbs: 3,   fat: 0.3 },
+  "mushroom":           { caloriesPer100g: 22,  protein: 3.1, carbs: 3,   fat: 0.3 },
+  "bell pepper":        { caloriesPer100g: 31,  protein: 1,   carbs: 6,   fat: 0.3 },
+  "corn":               { caloriesPer100g: 86,  protein: 3.3, carbs: 19,  fat: 1.2 },
+  "mashed potato":      { caloriesPer100g: 83,  protein: 2,   carbs: 15,  fat: 1.5 },
+  "squash":             { caloriesPer100g: 26,  protein: 1,   carbs: 7,   fat: 0.1 },
+  "artichoke":          { caloriesPer100g: 47,  protein: 3.3, carbs: 11,  fat: 0.2 },
   "banana":             { caloriesPer100g: 89,  protein: 1.1, carbs: 23,  fat: 0.3 },
   "apple":              { caloriesPer100g: 52,  protein: 0.3, carbs: 14,  fat: 0.2 },
+  "strawberry":         { caloriesPer100g: 32,  protein: 0.7, carbs: 8,   fat: 0.3 },
+  "orange":             { caloriesPer100g: 47,  protein: 0.9, carbs: 12,  fat: 0.1 },
+  "lemon":              { caloriesPer100g: 29,  protein: 1.1, carbs: 9,   fat: 0.3 },
+  "pineapple":          { caloriesPer100g: 50,  protein: 0.5, carbs: 13,  fat: 0.1 },
+  "pomegranate":        { caloriesPer100g: 83,  protein: 1.7, carbs: 19,  fat: 1.2 },
+  "fig":                { caloriesPer100g: 74,  protein: 0.8, carbs: 19,  fat: 0.3 },
+  "jackfruit":          { caloriesPer100g: 95,  protein: 1.7, carbs: 23,  fat: 0.6 },
+  "custard apple":      { caloriesPer100g: 94,  protein: 2.1, carbs: 24,  fat: 0.3 },
 };
 
 /**
+ * Normalize an ImageNet label to a food-friendly name.
+ */
+function normalizeLabel(rawLabel) {
+  const lower = rawLabel.toLowerCase().replace(/_/g, ' ').trim();
+
+  // Check ImageNet → food mapping first
+  if (imagenetToFood[lower]) {
+    return imagenetToFood[lower];
+  }
+
+  // Also check without commas: "pizza, pizza pie" → "pizza"
+  const beforeComma = lower.split(',')[0].trim();
+  if (imagenetToFood[beforeComma]) {
+    return imagenetToFood[beforeComma];
+  }
+
+  return beforeComma;
+}
+
+/**
  * Estimate nutrition given a food label and assumed portion size.
- * Attempts partial matching if exact label isn't found.
+ * Handles ImageNet labels, partial matches, and fallback heuristics.
  */
 export const estimateNutrition = (foodLabel, estimatedGrams = 250) => {
-  const normalizedLabel = foodLabel.toLowerCase().replace(/_/g, " ").trim();
+  const normalizedLabel = normalizeLabel(foodLabel);
 
   // 1. Try exact match
   let nutritionInfo = calorieDatabase[normalizedLabel];
 
-  // 2. Try partial / fuzzy match — e.g., "chicken_curry" matches "chicken curry"
+  // 2. Try partial / fuzzy match
   if (!nutritionInfo) {
     for (const [key, val] of Object.entries(calorieDatabase)) {
       if (normalizedLabel.includes(key) || key.includes(normalizedLabel)) {
